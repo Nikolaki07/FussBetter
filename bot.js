@@ -17,7 +17,7 @@ const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tutututu'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
-const germanWords = ['duits', 'deutsche', 'deutschland', 'german', 'duitsers', 'arier'];
+const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = 'USER_ID_HERE'; // Replace with the actual user ID
