@@ -19,6 +19,7 @@ const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const wannCsWords = ['wann cs'];
+const garminWords = ['ok garmin'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '629336494015905792';
@@ -74,6 +75,8 @@ client.on('messageCreate', async (message) => {
   const containsCS = wannCsWords.some(word => 
     lowerContent.includes(word)
   );
+  
+const containsGarmin = garminWords.some(word => lowerContent === word);
 
   // Check if message is from specific user
   const isGrrrUser = message.author.id === grrrUserId;
@@ -135,6 +138,14 @@ client.on('messageCreate', async (message) => {
   if (containsCS) {
     try {
       await message.channel.send('Jetzt!');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  }
+  
+  if(containsGarmin){
+	  try {
+      await message.channel.send('Video speichern');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
