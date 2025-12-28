@@ -21,7 +21,7 @@ const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'a
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
-const grrrUserId = '629336494015905792'; // Replace with the actual user ID
+const grrrUserId = '629336494015905792';
 
 // Event: Bot is ready
 client.once('ready', () => {
@@ -72,8 +72,8 @@ client.on('messageCreate', async (message) => {
   );
   
   const containsCS = wannCsWords.some(word => 
-	lowerContent.includes(word)
-  };
+    lowerContent.includes(word)
+  );
 
   // Check if message is from specific user
   const isGrrrUser = message.author.id === grrrUserId;
@@ -133,8 +133,8 @@ client.on('messageCreate', async (message) => {
   }
   
   if (containsCS) {
-	  try {
-      await message.channel.send('MAX VERSTAPPEN');
+    try {
+      await message.channel.send('NIEMALS');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
