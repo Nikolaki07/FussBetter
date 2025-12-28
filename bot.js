@@ -1,4 +1,5 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder } = require('discord.js');
+const fs = require('fs');
 
 // Create a new Discord client
 const client = new Client({
@@ -27,6 +28,27 @@ const grrrUserId = '629336494015905792';
 // Event: Bot is ready
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
+
+  // Register slash commands
+  const commands = [
+    {
+      name: 'schedule',
+      description: 'Shows the special events schedule',
+    },
+  ];
+
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
+
+  try {
+    console.log('Registering slash commands...');
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands },
+    );
+    console.log('Slash commands registered!');
+  } catch (error) {
+    console.error('Error registering commands:', error);
+  }
 });
 
 // Event: Message received
