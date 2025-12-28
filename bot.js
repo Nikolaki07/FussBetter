@@ -222,7 +222,7 @@ client.on('interactionCreate', async (interaction) => {
       }
 
       // Create attachment and send
-      const attachment = new AttachmentBuilder('./specialevents.webp');
+      const attachment = new AttachmentBuilder('specialevents.webp');
       await interaction.reply({ files: [attachment] });
     } catch (error) {
       console.error('Error sending schedule:', error);
