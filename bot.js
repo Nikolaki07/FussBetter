@@ -134,7 +134,7 @@ client.on('messageCreate', async (message) => {
   
   if (containsCS) {
     try {
-      await message.channel.send('NIEMALS');
+      await message.channel.send('Jetzt!');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
