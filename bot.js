@@ -220,5 +220,27 @@ const containsGarmin = garminWords.some(word => lowerContent === word);
   }
 });
 
+// Handle slash commands
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'schedule') {
+    try {
+      // Check if the image file exists
+      if (!fs.existsSync('./specialevents.png')) {
+        await interaction.reply('Schedule image not found!');
+        return;
+      }
+
+      // Create attachment and send
+      const attachment = new AttachmentBuilder('./specialevents.png');
+      await interaction.reply({ files: [attachment] });
+    } catch (error) {
+      console.error('Error sending schedule:', error);
+      await interaction.reply('Failed to send schedule image!');
+    }
+  }
+});
+
 // Login to Discord
 client.login(process.env.DISCORD_BOT_TOKEN);
