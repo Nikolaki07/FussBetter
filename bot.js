@@ -18,9 +18,10 @@ const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
+const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
-const grrrUserId = 'USER_ID_HERE'; // Replace with the actual user ID
+const grrrUserId = '629336494015905792'; // Replace with the actual user ID
 
 // Event: Bot is ready
 client.once('ready', () => {
@@ -69,6 +70,10 @@ client.on('messageCreate', async (message) => {
   const containsGerman = germanWords.some(word =>
     lowerContent.includes(word)
   );
+  
+  const containsCS = wannCsWords.some(word => 
+	lowerContent.includes(word)
+  };
 
   // Check if message is from specific user
   const isGrrrUser = message.author.id === grrrUserId;
@@ -124,6 +129,14 @@ client.on('messageCreate', async (message) => {
       await message.react('1403499851739828356');
     } catch (error) {
       console.error('Failed to react with German emote:', error);
+    }
+  }
+  
+  if (containsCS) {
+	  try {
+      await message.channel.send('MAX VERSTAPPEN');
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   }
 
