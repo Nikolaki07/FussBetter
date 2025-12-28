@@ -20,15 +20,14 @@ const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const wannCsWords = ['wann cs'];
-const garminWords = ['ok garmin'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '629336494015905792';
 
 // Event: Bot is ready
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
-
+  
   // Register slash commands
   const commands = [
     {
@@ -97,8 +96,6 @@ client.on('messageCreate', async (message) => {
   const containsCS = wannCsWords.some(word => 
     lowerContent.includes(word)
   );
-  
-const containsGarmin = garminWords.some(word => lowerContent === word);
 
   // Check if message is from specific user
   const isGrrrUser = message.author.id === grrrUserId;
@@ -159,15 +156,7 @@ const containsGarmin = garminWords.some(word => lowerContent === word);
   
   if (containsCS) {
     try {
-      await message.channel.send('Jetzt!');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  }
-  
-  if(containsGarmin){
-	  try {
-      await message.channel.send('Video speichern');
+      await message.channel.send('NIEMALS');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
