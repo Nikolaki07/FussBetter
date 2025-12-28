@@ -156,7 +156,7 @@ client.on('messageCreate', async (message) => {
   
   if (containsCS) {
     try {
-      await message.channel.send('NIEMALS');
+      await message.channel.send('Jetzt!');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -216,13 +216,13 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'schedule') {
     try {
       // Check if the image file exists
-      if (!fs.existsSync('./specialevents.png')) {
+      if (!fs.existsSync('./specialevents.webp')) {
         await interaction.reply('Schedule image not found!');
         return;
       }
 
       // Create attachment and send
-      const attachment = new AttachmentBuilder('./specialevents.png');
+      const attachment = new AttachmentBuilder('./specialevents.webp');
       await interaction.reply({ files: [attachment] });
     } catch (error) {
       console.error('Error sending schedule:', error);
