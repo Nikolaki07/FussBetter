@@ -17,7 +17,7 @@ const franceWords = ['france', '🇫🇷', 'french'];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
-const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
+const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer', 'dutch', 'türken'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const wannCsWords = ['wann cs'];
 
