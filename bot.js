@@ -30,6 +30,18 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected successfully!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Reminder Schema
+const reminderSchema = new mongoose.Schema({
+  userId: String,
+  channelId: String,
+  guildId: String,
+  message: String,
+  remindAt: Date,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Reminder = mongoose.model('Reminder', reminderSchema);
+
 // Event: Bot is ready
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -41,8 +53,32 @@ client.once('ready', async () => {
       description: 'Shows the special events schedule',
     },
     {
-      name: 'dbtest',
-      description: 'Test MongoDB connection',
+      name: 'remind',
+      description: 'Set a reminder',
+      options: [
+        {
+          name: 'type',
+          description: 'Time (in minutes) or Date (DD.MM. HH:MM)',
+          type: 3, // STRING
+          required: true,
+          choices: [
+            { name: 'time', value: 'time' },
+            { name: 'date', value: 'date' }
+          ]
+        },
+        {
+          name: 'when',
+          description: 'For time: minutes (e.g., 10). For date: DD.MM. HH:MM (e.g., 01.01. 20:00)',
+          type: 3, // STRING
+          required: true
+        },
+        {
+          name: 'message',
+          description: 'What to remind you about',
+          type: 3, // STRING
+          required: true
+        }
+      ]
     },
   ];
 
@@ -58,6 +94,9 @@ client.once('ready', async () => {
   } catch (error) {
     console.error('Error registering commands:', error);
   }
+
+  // Check for reminders every minute
+  setInterval(checkReminders, 60000);
 });
 
 // Event: Message received
@@ -240,17 +279,80 @@ client.on('interactionCreate', async (interaction) => {
     }
   }
 
-  if (interaction.commandName === 'dbtest') {
+  if (interaction.commandName === 'remind') {
     try {
-      const dbState = mongoose.connection.readyState;
-      const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
-      await interaction.reply(`MongoDB status: ${states[dbState]}`);
+      const type = interaction.options.getString('type');
+      const when = interaction.options.getString('when');
+      const message = interaction.options.getString('message');
+      
+      let remindAt;
+      
+      if (type === 'time') {
+        // Parse minutes
+        const minutes = parseInt(when);
+        if (isNaN(minutes) || minutes <= 0) {
+          await interaction.reply('Invalid time! Please enter a positive number of minutes.');
+          return;
+        }
+        remindAt = new Date(Date.now() + minutes * 60000);
+      } else if (type === 'date') {
+        // Parse date format: DD.MM. HH:MM
+        const match = when.match(/^(\d{1,2})\.(\d{1,2})\.\s+(\d{1,2}):(\d{2})$/);
+        if (!match) {
+          await interaction.reply('Invalid date format! Use: DD.MM. HH:MM (e.g., 01.01. 20:00)');
+          return;
+        }
+        
+        const [, day, month, hour, minute] = match;
+        const now = new Date();
+        remindAt = new Date(now.getFullYear(), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+        
+        // If date is in the past, assume next year
+        if (remindAt < now) {
+          remindAt.setFullYear(now.getFullYear() + 1);
+        }
+      }
+      
+      // Save reminder to database
+      const reminder = new Reminder({
+        userId: interaction.user.id,
+        channelId: interaction.channel.id,
+        guildId: interaction.guild.id,
+        message: message,
+        remindAt: remindAt
+      });
+      
+      await reminder.save();
+      
+      await interaction.reply(`Reminder set! I'll remind you about "${message}" at ${remindAt.toLocaleString('de-DE')}`);
     } catch (error) {
-      console.error('Error checking database:', error);
-      await interaction.reply('Failed to check database status!');
+      console.error('Error creating reminder:', error);
+      await interaction.reply('Failed to create reminder!');
     }
   }
 });
+
+// Check reminders function
+async function checkReminders() {
+  try {
+    const now = new Date();
+    const dueReminders = await Reminder.find({ remindAt: { $lte: now } });
+    
+    for (const reminder of dueReminders) {
+      try {
+        const channel = await client.channels.fetch(reminder.channelId);
+        if (channel) {
+          await channel.send(`<@${reminder.userId}> Reminder: ${reminder.message}`);
+        }
+        await Reminder.deleteOne({ _id: reminder._id });
+      } catch (error) {
+        console.error('Error sending reminder:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking reminders:', error);
+  }
+}
 
 // Login to Discord
 client.login(process.env.DISCORD_BOT_TOKEN);
