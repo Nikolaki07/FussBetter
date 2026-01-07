@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 // Create a new Discord client
 const client = new Client({
@@ -17,12 +18,17 @@ const franceWords = ['france', '🇫🇷', 'french'];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
-const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer', 'dutch', 'türken'];
+const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier', 'db'];
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '629336494015905792';
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB connected successfully!'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Event: Bot is ready
 client.once('ready', async () => {
@@ -33,6 +39,10 @@ client.once('ready', async () => {
     {
       name: 'schedule',
       description: 'Shows the special events schedule',
+    },
+    {
+      name: 'dbtest',
+      description: 'Test MongoDB connection',
     },
   ];
 
@@ -222,11 +232,22 @@ client.on('interactionCreate', async (interaction) => {
       }
 
       // Create attachment and send
-      const attachment = new AttachmentBuilder('specialevents.webp');
+      const attachment = new AttachmentBuilder('./specialevents.webp');
       await interaction.reply({ files: [attachment] });
     } catch (error) {
       console.error('Error sending schedule:', error);
       await interaction.reply('Failed to send schedule image!');
+    }
+  }
+
+  if (interaction.commandName === 'dbtest') {
+    try {
+      const dbState = mongoose.connection.readyState;
+      const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+      await interaction.reply(`MongoDB status: ${states[dbState]}`);
+    } catch (error) {
+      console.error('Error checking database:', error);
+      await interaction.reply('Failed to check database status!');
     }
   }
 });
