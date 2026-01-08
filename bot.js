@@ -355,14 +355,20 @@ async function checkReminders() {
       try {
         const channel = await client.channels.fetch(reminder.channelId);
         if (channel) {
-          const embed = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle('⏰ Reminder!')
-            .setDescription(reminder.message)
-            .setTimestamp()
-            .setFooter({ text: 'Reminder Bot' });
-          
-          await channel.send({ content: `<@${reminder.userId}>`, embeds: [embed] });
+          // Check if message is JSON (embed)
+          if (reminder.message.trim().startsWith('{')) {
+            try {
+              const embedData = JSON.parse(reminder.message);
+              const embed = new EmbedBuilder(embedData);
+              await channel.send({ content: `<@${reminder.userId}>`, embeds: [embed] });
+            } catch (jsonError) {
+              // If JSON parsing fails, send as regular message
+              await channel.send(`<@${reminder.userId}> Reminder: ${reminder.message}`);
+            }
+          } else {
+            // Regular text message
+            await channel.send(`<@${reminder.userId}> Reminder: ${reminder.message}`);
+          }
         }
         await Reminder.deleteOne({ _id: reminder._id });
       } catch (error) {
