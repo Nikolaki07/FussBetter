@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const mongoose = require('mongoose');
 
@@ -68,7 +68,7 @@ client.once('ready', async () => {
         },
         {
           name: 'when',
-          description: 'For time: minutes (e.g., 10). For date: DD.MM. HH:MM (e.g., 01.01. 20:00)',
+          description: 'For time: minutes (e.g., 10). For date: DD.MM.YY HH:MM (e.g., 01.08.26 20:00)',
           type: 3, // STRING
           required: true
         },
@@ -296,20 +296,32 @@ client.on('interactionCreate', async (interaction) => {
         }
         remindAt = new Date(Date.now() + minutes * 60000);
       } else if (type === 'date') {
-        // Parse date format: DD.MM. HH:MM
-        const match = when.match(/^(\d{1,2})\.(\d{1,2})\.\s+(\d{1,2}):(\d{2})$/);
+        // Parse date format: DD.MM.YY HH:MM
+        const match = when.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\s+(\d{1,2}):(\d{2})$/);
         if (!match) {
-          await interaction.reply('Invalid date format! Use: DD.MM. HH:MM (e.g., 01.01. 20:00)');
+          await interaction.reply('Invalid date format! Use: DD.MM.YY HH:MM (e.g., 01.08.26 20:00)');
           return;
         }
         
-        const [, day, month, hour, minute] = match;
-        const now = new Date();
-        remindAt = new Date(now.getFullYear(), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+        const [, day, month, year, hour, minute] = match;
+        // Convert 2-digit year to 4-digit (26 -> 2026)
+        const fullYear = 2000 + parseInt(year);
         
-        // If date is in the past, assume next year
-        if (remindAt < now) {
-          remindAt.setFullYear(now.getFullYear() + 1);
+        // Create date string in ISO format for Frankfurt timezone
+        const dateString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+        
+        // Parse as Frankfurt time (Europe/Berlin timezone)
+        remindAt = new Date(dateString + '+01:00'); // CET offset
+        
+        // Adjust for daylight saving time
+        const frankfurtDate = new Date(remindAt.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+        const offset = (remindAt - frankfurtDate) / 60000; // offset in minutes
+        remindAt = new Date(remindAt.getTime() - offset * 60000);
+        
+        // Check if date is in the past
+        if (remindAt < new Date()) {
+          await interaction.reply('That date is in the past! Please choose a future date.');
+          return;
         }
       }
       
@@ -324,7 +336,8 @@ client.on('interactionCreate', async (interaction) => {
       
       await reminder.save();
       
-      await interaction.reply(`Reminder set! I'll remind you about "${message}" at ${remindAt.toLocaleString('de-DE')}`);
+      const frankfurtTime = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
+      await interaction.reply(`Reminder set! I'll remind you about "${message}" at ${frankfurtTime} (Frankfurt time)`);
     } catch (error) {
       console.error('Error creating reminder:', error);
       await interaction.reply('Failed to create reminder!');
@@ -342,7 +355,14 @@ async function checkReminders() {
       try {
         const channel = await client.channels.fetch(reminder.channelId);
         if (channel) {
-          await channel.send(`<@${reminder.userId}> Reminder: ${reminder.message}`);
+          const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('⏰ Reminder!')
+            .setDescription(reminder.message)
+            .setTimestamp()
+            .setFooter({ text: 'Reminder Bot' });
+          
+          await channel.send({ content: `<@${reminder.userId}>`, embeds: [embed] });
         }
         await Reminder.deleteOne({ _id: reminder._id });
       } catch (error) {
