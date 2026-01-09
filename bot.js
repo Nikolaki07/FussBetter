@@ -23,7 +23,7 @@ const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'a
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
-const grrrUserId = '629336494015905792';
+const grrrUserId = '69';
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
