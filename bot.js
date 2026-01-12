@@ -1,14 +1,27 @@
-// FIXES APPLIED:
-// 1) Correct CET/CEST handling using Europe/Berlin consistently (no +1h drift)
-// 2) Properly build embeds from discohook-style JSON (EmbedBuilder.from, embeds[] support)
+// ================================
+// FULL DISCORD BOT WITH FIXED CET/CEST + EMBEDS
+// ================================
 
-const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  AttachmentBuilder,
+  EmbedBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder
+} = require('discord.js');
+
 const fs = require('fs');
 const mongoose = require('mongoose');
 
-// -------------------- HELPERS --------------------
+// ================================
+// TIMEZONE HELPER (CET / CEST SAFE)
+// ================================
 
-// Parse a DD.MM.YY HH:MM string as Europe/Berlin local time and return a Date (UTC-correct)
 function parseBerlinDate(when) {
   const match = when.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\s+(\d{1,2}):(\d{2})$/);
   if (!match) return null;
@@ -16,30 +29,18 @@ function parseBerlinDate(when) {
   const [, d, m, y, hh, mm] = match.map(Number);
   const year = 2000 + y;
 
-  // Create a UTC date with the same wall-clock values
   const utcGuess = new Date(Date.UTC(year, m - 1, d, hh, mm, 0));
+  const berlinAsUTC = new Date(
+    utcGuess.toLocaleString('en-US', { timeZone: 'Europe/Berlin' })
+  );
 
-  // Find the Berlin offset at that moment
-  const berlinAsUTC = new Date(utcGuess.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
   const offsetMs = utcGuess.getTime() - berlinAsUTC.getTime();
-
-  // Subtract offset to get the true UTC instant for Berlin local time
   return new Date(utcGuess.getTime() + offsetMs);
 }
 
-// Build embeds safely from JSON (supports discohook exports)
-function buildEmbedsFromJson(json) {
-  if (Array.isArray(json.embeds)) {
-    return json.embeds.map(e => EmbedBuilder.from(e));
-  }
-  if (json.embed) {
-    return [EmbedBuilder.from(json.embed)];
-  }
-  // Single embed object
-  return [EmbedBuilder.from(json)];
-}
-
-// -------------------- CLIENT --------------------
+// ================================
+// CLIENT SETUP
+// ================================
 
 const client = new Client({
   intents: [
@@ -49,23 +50,47 @@ const client = new Client({
   ],
 });
 
+// ================================
+// WORD LISTS / REACTIONS
+// ================================
+
+const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet'];
+const larsonWords = ['kyle larson', 'larson'];
+const franceWords = ['france', '🇫🇷', 'french'];
+const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
+const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
+const tutututuWords = ['tututu', 'tödödö'];
+const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
+const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
+const wannCsWords = ['wann cs'];
+
+const grrrUserId = '629336494015905792';
+
+// ================================
+// DATABASE
+// ================================
+
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected successfully!'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected'))
+  .catch(console.error);
 
 const reminderSchema = new mongoose.Schema({
   userId: String,
   channelId: String,
   guildId: String,
-  message: String, // text OR raw embed JSON string
+  message: String,
   remindAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
 const Reminder = mongoose.model('Reminder', reminderSchema);
 
+// ================================
+// READY EVENT
+// ================================
+
 client.once('ready', async () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user.tag}`);
 
   const commands = [
     { name: 'schedule', description: 'Shows the special events schedule' },
@@ -78,7 +103,7 @@ client.once('ready', async () => {
           { name: 'date', value: 'date' }
         ]},
         { name: 'when', description: 'minutes OR DD.MM.YY HH:MM', type: 3, required: true },
-        { name: 'message', description: 'Reminder text', type: 3, required: true }
+        { name: 'message', description: 'What to remind you about', type: 3, required: true }
       ]
     },
     { name: 'remind-embed', description: 'Set a reminder with an embed' }
@@ -90,14 +115,54 @@ client.once('ready', async () => {
   setInterval(checkReminders, 60_000);
 });
 
-// -------------------- SLASH COMMANDS --------------------
+// ================================
+// MESSAGE CREATE (REACTIONS)
+// ================================
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  const lower = message.content.toLowerCase();
+
+  if (targetWords.some(w => lower.includes(w))) await message.react('🤤');
+
+  if (maxWords.some(w => lower.includes(w))) {
+    await message.react('🤤');
+    await message.react('🇳🇱');
+    await message.channel.send('TUTUTUTU');
+  }
+
+  if (landoWords.some(w => lower.includes(w))) {
+    await message.react('🤮');
+    await message.react('🌈');
+  }
+
+  if (tutututuWords.some(w => lower.includes(w))) {
+    await message.channel.send('MAX VERSTAPPEN');
+  }
+
+  if (grrWords.some(w => lower.includes(w)) || message.author.id === grrrUserId) {
+    await message.react('1442859255748362261');
+  }
+
+  if (germanWords.some(w => lower.includes(w)) || /\bdb\b/i.test(message.content)) {
+    await message.react('1403499851739828356');
+  }
+
+  if (wannCsWords.some(w => lower.includes(w))) {
+    await message.channel.send('Jetzt!');
+  }
+});
+
+// ================================
+// INTERACTIONS
+// ================================
 
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isChatInputCommand()) {
+
     if (interaction.commandName === 'schedule') {
-      if (!fs.existsSync('./specialevents.webp')) {
-        return interaction.reply('Schedule image not found!');
-      }
+      if (!fs.existsSync('./specialevents.webp')) return interaction.reply('No schedule found');
       return interaction.reply({ files: [new AttachmentBuilder('./specialevents.webp')] });
     }
 
@@ -107,20 +172,15 @@ client.on('interactionCreate', async (interaction) => {
       const message = interaction.options.getString('message');
 
       let remindAt;
+
       if (type === 'time') {
         const minutes = parseInt(when, 10);
-        if (!Number.isInteger(minutes) || minutes <= 0) {
-          return interaction.reply('Invalid minutes.');
-        }
-        remindAt = new Date(Date.now() + minutes * 60_000);
+        if (!minutes || minutes <= 0) return interaction.reply('Invalid minutes');
+        remindAt = new Date(Date.now() + minutes * 60000);
       } else {
         remindAt = parseBerlinDate(when);
-        if (!remindAt) {
-          return interaction.reply('Invalid date format. Use DD.MM.YY HH:MM');
-        }
-        if (remindAt < new Date()) {
-          return interaction.reply('That date is in the past.');
-        }
+        if (!remindAt) return interaction.reply('Invalid date format');
+        if (remindAt < new Date()) return interaction.reply('Date is in the past');
       }
 
       await new Reminder({
@@ -132,21 +192,21 @@ client.on('interactionCreate', async (interaction) => {
       }).save();
 
       const berlin = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-      return interaction.reply(`Reminder set for ${berlin} (CET/CEST)`);
+      return interaction.reply(`Reminder set for ${berlin}`);
     }
 
     if (interaction.commandName === 'remind-embed') {
-      const modal = new ModalBuilder().setCustomId('reminder-modal').setTitle('Set Embed Reminder');
+      const modal = new ModalBuilder().setCustomId('reminder-modal').setTitle('Embed Reminder');
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('reminder-type').setLabel('time or date').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('type').setLabel('time or date').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('reminder-when').setLabel('minutes OR DD.MM.YY HH:MM').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('when').setLabel('minutes OR DD.MM.YY HH:MM').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('reminder-embed').setLabel('Embed JSON (discohook)').setStyle(TextInputStyle.Paragraph).setRequired(true)
+          new TextInputBuilder().setCustomId('embed').setLabel('Embed JSON').setStyle(TextInputStyle.Paragraph).setRequired(true)
         )
       );
 
@@ -154,34 +214,24 @@ client.on('interactionCreate', async (interaction) => {
     }
   }
 
-  // -------------------- MODAL --------------------
-
   if (interaction.isModalSubmit() && interaction.customId === 'reminder-modal') {
-    const type = interaction.fields.getTextInputValue('reminder-type').toLowerCase();
-    const when = interaction.fields.getTextInputValue('reminder-when');
-    const embedJsonRaw = interaction.fields.getTextInputValue('reminder-embed');
+    const type = interaction.fields.getTextInputValue('type');
+    const when = interaction.fields.getTextInputValue('when');
+    const embedRaw = interaction.fields.getTextInputValue('embed');
 
     let embedJson;
-    try { embedJson = JSON.parse(embedJsonRaw); }
-    catch { return interaction.reply({ content: 'Invalid JSON.', ephemeral: true }); }
+    try { embedJson = JSON.parse(embedRaw); }
+    catch { return interaction.reply({ content: 'Invalid JSON', ephemeral: true }); }
 
     let remindAt;
+
     if (type === 'time') {
       const minutes = parseInt(when, 10);
-      if (!Number.isInteger(minutes) || minutes <= 0) {
-        return interaction.reply({ content: 'Invalid minutes.', ephemeral: true });
-      }
-      remindAt = new Date(Date.now() + minutes * 60_000);
-    } else if (type === 'date') {
-      remindAt = parseBerlinDate(when);
-      if (!remindAt) {
-        return interaction.reply({ content: 'Invalid date format.', ephemeral: true });
-      }
-      if (remindAt < new Date()) {
-        return interaction.reply({ content: 'That date is in the past.', ephemeral: true });
-      }
+      if (!minutes || minutes <= 0) return interaction.reply({ content: 'Invalid minutes', ephemeral: true });
+      remindAt = new Date(Date.now() + minutes * 60000);
     } else {
-      return interaction.reply({ content: 'Type must be time or date.', ephemeral: true });
+      remindAt = parseBerlinDate(when);
+      if (!remindAt || remindAt < new Date()) return interaction.reply({ content: 'Invalid date', ephemeral: true });
     }
 
     await new Reminder({
@@ -192,38 +242,39 @@ client.on('interactionCreate', async (interaction) => {
       remindAt
     }).save();
 
-    const berlin = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-    return interaction.reply({ content: `Embed reminder set for ${berlin}`, ephemeral: true });
+    return interaction.reply({ content: 'Embed reminder saved', ephemeral: true });
   }
 });
 
-// -------------------- REMINDER DISPATCH --------------------
+// ================================
+// REMINDER CHECKER
+// ================================
 
 async function checkReminders() {
   const now = new Date();
   const due = await Reminder.find({ remindAt: { $lte: now } });
 
   for (const r of due) {
+    const channel = await client.channels.fetch(r.channelId).catch(() => null);
+    if (!channel) continue;
+
     try {
-      const channel = await client.channels.fetch(r.channelId);
-      if (!channel) continue;
+      const json = JSON.parse(r.message);
+      const embeds = Array.isArray(json.embeds)
+        ? json.embeds.map(e => EmbedBuilder.from(e))
+        : [EmbedBuilder.from(json.embed ?? json)];
 
-      const contentPing = `<@${r.userId}>`;
-
-      // Try embed JSON first
-      try {
-        const json = JSON.parse(r.message);
-        const embeds = buildEmbedsFromJson(json);
-        await channel.send({ content: contentPing, embeds });
-      } catch {
-        await channel.send(`${contentPing} Reminder: ${r.message}`);
-      }
-
-      await Reminder.deleteOne({ _id: r._id });
-    } catch (e) {
-      console.error('Reminder send error:', e);
+      await channel.send({ content: `<@${r.userId}>`, embeds });
+    } catch {
+      await channel.send(`<@${r.userId}> Reminder: ${r.message}`);
     }
+
+    await Reminder.deleteOne({ _id: r._id });
   }
 }
+
+// ================================
+// LOGIN
+// ================================
 
 client.login(process.env.DISCORD_BOT_TOKEN);
