@@ -80,7 +80,6 @@ const reminderSchema = new mongoose.Schema({
   guildId: String,
   message: String,
   remindAt: Date,
-  pinged: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -104,8 +103,7 @@ client.once('ready', async () => {
           { name: 'date', value: 'date' }
         ]},
         { name: 'when', description: 'minutes OR DD.MM.YY HH:MM', type: 3, required: true },
-        { name: 'message', description: 'What to remind you about', type: 3, required: true },
-        { name: 'get_pinged', description: 'Ping you when the reminder fires', type: 5, required: false }
+        { name: 'message', description: 'What to remind you about', type: 3, required: true }
       ]
     },
     { name: 'remind-embed', description: 'Set a reminder with an embed' }
@@ -172,7 +170,6 @@ client.on('interactionCreate', async (interaction) => {
       const type = interaction.options.getString('type');
       const when = interaction.options.getString('when');
       const message = interaction.options.getString('message');
-      const pinged = interaction.options.getBoolean('get_pinged') ?? true;
 
       let remindAt;
 
@@ -191,8 +188,7 @@ client.on('interactionCreate', async (interaction) => {
         channelId: interaction.channel.id,
         guildId: interaction.guild.id,
         message,
-        remindAt,
-        pinged
+        remindAt
       }).save();
 
       const berlin = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
@@ -210,9 +206,6 @@ client.on('interactionCreate', async (interaction) => {
           new TextInputBuilder().setCustomId('when').setLabel('minutes OR DD.MM.YY HH:MM').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('pinged').setLabel('get pinged? true / false').setStyle(TextInputStyle.Short).setRequired(false)
-        ),
-        new ActionRowBuilder().addComponents(
           new TextInputBuilder().setCustomId('embed').setLabel('Embed JSON').setStyle(TextInputStyle.Paragraph).setRequired(true)
         )
       );
@@ -225,8 +218,6 @@ client.on('interactionCreate', async (interaction) => {
     const type = interaction.fields.getTextInputValue('type');
     const when = interaction.fields.getTextInputValue('when');
     const embedRaw = interaction.fields.getTextInputValue('embed');
-    const pingedRaw = interaction.fields.getTextInputValue('pinged');
-    const pinged = pingedRaw ? pingedRaw.toLowerCase() !== 'false' : true;
 
     let embedJson;
     try { embedJson = JSON.parse(embedRaw); }
@@ -248,8 +239,7 @@ client.on('interactionCreate', async (interaction) => {
       channelId: interaction.channel.id,
       guildId: interaction.guild.id,
       message: JSON.stringify(embedJson),
-      remindAt,
-      pinged
+      remindAt
     }).save();
 
     return interaction.reply({ content: 'Embed reminder saved', ephemeral: true });
@@ -274,9 +264,9 @@ async function checkReminders() {
         ? json.embeds.map(e => EmbedBuilder.from(e))
         : [EmbedBuilder.from(json.embed ?? json)];
 
-      await channel.send({ content: r.pinged ? `<@${r.userId}>` : undefined, embeds });
+      await channel.send({ content: `<@${r.userId}>`, embeds });
     } catch {
-      await channel.send(r.pinged ? `<@${r.userId}> ${r.message}` : r.message);
+      await channel.send(`<@${r.userId}> Reminder: ${r.message}`);
     }
 
     await Reminder.deleteOne({ _id: r._id });
