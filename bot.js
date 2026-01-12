@@ -64,7 +64,7 @@ const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const wannCsWords = ['wann cs'];
 
-const grrrUserId = '629336494015905792';
+const grrrUserId = '1';
 
 // ================================
 // DATABASE
