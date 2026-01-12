@@ -23,7 +23,7 @@ const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'a
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
-const grrrUserId = '69';
+const grrrUserId = '629336494015905792';
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -79,6 +79,10 @@ client.once('ready', async () => {
           required: true
         }
       ]
+    },
+    {
+      name: 'remind-embed',
+      description: 'Set a reminder with an embed',
     },
   ];
 
@@ -260,87 +264,193 @@ client.on('messageCreate', async (message) => {
 
 // Handle slash commands
 client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === 'schedule') {
+      try {
+        // Check if the image file exists
+        if (!fs.existsSync('./specialevents.webp')) {
+          await interaction.reply('Schedule image not found!');
+          return;
+        }
 
-  if (interaction.commandName === 'schedule') {
-    try {
-      // Check if the image file exists
-      if (!fs.existsSync('./specialevents.webp')) {
-        await interaction.reply('Schedule image not found!');
-        return;
+        // Create attachment and send
+        const attachment = new AttachmentBuilder('./specialevents.webp');
+        await interaction.reply({ files: [attachment] });
+      } catch (error) {
+        console.error('Error sending schedule:', error);
+        await interaction.reply('Failed to send schedule image!');
       }
+    }
 
-      // Create attachment and send
-      const attachment = new AttachmentBuilder('./specialevents.webp');
-      await interaction.reply({ files: [attachment] });
-    } catch (error) {
-      console.error('Error sending schedule:', error);
-      await interaction.reply('Failed to send schedule image!');
+    if (interaction.commandName === 'remind') {
+      try {
+        const type = interaction.options.getString('type');
+        const when = interaction.options.getString('when');
+        const message = interaction.options.getString('message');
+        
+        let remindAt;
+        
+        if (type === 'time') {
+          // Parse minutes
+          const minutes = parseInt(when);
+          if (isNaN(minutes) || minutes <= 0) {
+            await interaction.reply('Invalid time! Please enter a positive number of minutes.');
+            return;
+          }
+          remindAt = new Date(Date.now() + minutes * 60000);
+        } else if (type === 'date') {
+          // Parse date format: DD.MM.YY HH:MM
+          const match = when.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\s+(\d{1,2}):(\d{2})$/);
+          if (!match) {
+            await interaction.reply('Invalid date format! Use: DD.MM.YY HH:MM (e.g., 01.08.26 20:00)');
+            return;
+          }
+          
+          const [, day, month, year, hour, minute] = match;
+          // Convert 2-digit year to 4-digit (26 -> 2026)
+          const fullYear = 2000 + parseInt(year);
+          
+          // Create date string in ISO format for Frankfurt timezone
+          const dateString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+          
+          // Parse as Frankfurt time (Europe/Berlin timezone)
+          remindAt = new Date(dateString + '+01:00'); // CET offset
+          
+          // Adjust for daylight saving time
+          const frankfurtDate = new Date(remindAt.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+          const offset = (remindAt - frankfurtDate) / 60000; // offset in minutes
+          remindAt = new Date(remindAt.getTime() - offset * 60000);
+          
+          // Check if date is in the past
+          if (remindAt < new Date()) {
+            await interaction.reply('That date is in the past! Please choose a future date.');
+            return;
+          }
+        }
+        
+        // Save reminder to database
+        const reminder = new Reminder({
+          userId: interaction.user.id,
+          channelId: interaction.channel.id,
+          guildId: interaction.guild.id,
+          message: message,
+          remindAt: remindAt
+        });
+        
+        await reminder.save();
+        
+        const frankfurtTime = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
+        await interaction.reply(`Reminder set! I'll remind you about "${message}" at ${frankfurtTime} (Frankfurt time)`);
+      } catch (error) {
+        console.error('Error creating reminder:', error);
+        await interaction.reply('Failed to create reminder!');
+      }
+    }
+
+    if (interaction.commandName === 'remind-embed') {
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+      
+      const modal = new ModalBuilder()
+        .setCustomId('reminder-modal')
+        .setTitle('Set Embed Reminder');
+
+      const typeInput = new TextInputBuilder()
+        .setCustomId('reminder-type')
+        .setLabel('Type: "time" or "date"')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('time or date')
+        .setRequired(true);
+
+      const whenInput = new TextInputBuilder()
+        .setCustomId('reminder-when')
+        .setLabel('When? (minutes OR DD.MM.YY HH:MM)')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('10 OR 01.08.26 20:00')
+        .setRequired(true);
+
+      const embedInput = new TextInputBuilder()
+        .setCustomId('reminder-embed')
+        .setLabel('Embed JSON (from discohook.org)')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('{"title":"Test","description":"Hello!"}')
+        .setRequired(true);
+
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(typeInput),
+        new ActionRowBuilder().addComponents(whenInput),
+        new ActionRowBuilder().addComponents(embedInput)
+      );
+
+      await interaction.showModal(modal);
     }
   }
 
-  if (interaction.commandName === 'remind') {
+  // Handle modal submissions
+  if (interaction.isModalSubmit() && interaction.customId === 'reminder-modal') {
     try {
-      const type = interaction.options.getString('type');
-      const when = interaction.options.getString('when');
-      const message = interaction.options.getString('message');
-      
+      const type = interaction.fields.getTextInputValue('reminder-type').toLowerCase();
+      const when = interaction.fields.getTextInputValue('reminder-when');
+      const embedJson = interaction.fields.getTextInputValue('reminder-embed');
+
+      // Validate JSON
+      let embedData;
+      try {
+        embedData = JSON.parse(embedJson);
+      } catch (jsonError) {
+        await interaction.reply({ content: 'Invalid JSON! Please use a valid embed JSON format.', ephemeral: true });
+        return;
+      }
+
       let remindAt;
-      
+
       if (type === 'time') {
-        // Parse minutes
         const minutes = parseInt(when);
         if (isNaN(minutes) || minutes <= 0) {
-          await interaction.reply('Invalid time! Please enter a positive number of minutes.');
+          await interaction.reply({ content: 'Invalid time! Please enter a positive number of minutes.', ephemeral: true });
           return;
         }
         remindAt = new Date(Date.now() + minutes * 60000);
       } else if (type === 'date') {
-        // Parse date format: DD.MM.YY HH:MM
         const match = when.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\s+(\d{1,2}):(\d{2})$/);
         if (!match) {
-          await interaction.reply('Invalid date format! Use: DD.MM.YY HH:MM (e.g., 01.08.26 20:00)');
+          await interaction.reply({ content: 'Invalid date format! Use: DD.MM.YY HH:MM (e.g., 01.08.26 20:00)', ephemeral: true });
           return;
         }
-        
+
         const [, day, month, year, hour, minute] = match;
-        // Convert 2-digit year to 4-digit (26 -> 2026)
         const fullYear = 2000 + parseInt(year);
-        
-        // Create date string in ISO format for Frankfurt timezone
         const dateString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+        remindAt = new Date(dateString + '+01:00');
         
-        // Parse as Frankfurt time (Europe/Berlin timezone)
-        remindAt = new Date(dateString + '+01:00'); // CET offset
-        
-        // Adjust for daylight saving time
         const frankfurtDate = new Date(remindAt.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
-        const offset = (remindAt - frankfurtDate) / 60000; // offset in minutes
+        const offset = (remindAt - frankfurtDate) / 60000;
         remindAt = new Date(remindAt.getTime() - offset * 60000);
-        
-        // Check if date is in the past
+
         if (remindAt < new Date()) {
-          await interaction.reply('That date is in the past! Please choose a future date.');
+          await interaction.reply({ content: 'That date is in the past! Please choose a future date.', ephemeral: true });
           return;
         }
+      } else {
+        await interaction.reply({ content: 'Invalid type! Use "time" or "date".', ephemeral: true });
+        return;
       }
-      
-      // Save reminder to database
+
+      // Save reminder with embed JSON
       const reminder = new Reminder({
         userId: interaction.user.id,
         channelId: interaction.channel.id,
         guildId: interaction.guild.id,
-        message: message,
+        message: embedJson,
         remindAt: remindAt
       });
-      
+
       await reminder.save();
-      
+
       const frankfurtTime = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-      await interaction.reply(`Reminder set! I'll remind you about "${message}" at ${frankfurtTime} (Frankfurt time)`);
+      await interaction.reply({ content: `Embed reminder set for ${frankfurtTime} (Frankfurt time)!`, ephemeral: true });
     } catch (error) {
-      console.error('Error creating reminder:', error);
-      await interaction.reply('Failed to create reminder!');
+      console.error('Error creating embed reminder:', error);
+      await interaction.reply({ content: 'Failed to create reminder!', ephemeral: true });
     }
   }
 });
