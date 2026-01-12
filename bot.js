@@ -1,5 +1,5 @@
 // ================================
-// FULL DISCORD BOT WITH FIXED CET/CEST + EMBEDS
+// FULL DISCORD BOT WITH FIXED CET/CEST + EMBEDS + CHANNEL SELECTION
 // ================================
 
 const {
@@ -105,7 +105,8 @@ client.once('ready', async () => {
         ]},
         { name: 'when', description: 'minutes OR DD.MM.YY HH:MM', type: 3, required: true },
         { name: 'message', description: 'What to remind you about', type: 3, required: true },
-        { name: 'get_pinged', description: 'Ping you when the reminder fires', type: 5, required: false }
+        { name: 'get_pinged', description: 'Ping you when the reminder fires', type: 5, required: false },
+        { name: 'channel', description: 'Channel to send the reminder in', type: 7, required: false }
       ]
     },
     { name: 'remind-embed', description: 'Set a reminder with an embed' }
@@ -118,86 +119,11 @@ client.once('ready', async () => {
 });
 
 // ================================
-// MESSAGE CREATE (REACTIONS)
-// ================================
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  const lower = message.content.toLowerCase();
-
-  if (targetWords.some(w => lower.includes(w))) await message.react('🤤');
-
-  if (maxWords.some(w => lower.includes(w))) {
-    await message.react('🤤');
-    await message.react('🇳🇱');
-    await message.channel.send('TUTUTUTU');
-  }
-
-  if (landoWords.some(w => lower.includes(w))) {
-    await message.react('🤮');
-    await message.react('🌈');
-  }
-
-  if (tutututuWords.some(w => lower.includes(w))) {
-    await message.channel.send('MAX VERSTAPPEN');
-  }
-
-  if (grrWords.some(w => lower.includes(w)) || message.author.id === grrrUserId) {
-    await message.react('1442859255748362261');
-  }
-
-  if (germanWords.some(w => lower.includes(w)) || /\bdb\b/i.test(message.content)) {
-    await message.react('1403499851739828356');
-  }
-
-  if (wannCsWords.some(w => lower.includes(w))) {
-    await message.channel.send('Jetzt!');
-  }
-});
-
-// ================================
 // INTERACTIONS
 // ================================
 
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isChatInputCommand()) {
-
-    if (interaction.commandName === 'schedule') {
-      if (!fs.existsSync('./specialevents.webp')) return interaction.reply('No schedule found');
-      return interaction.reply({ files: [new AttachmentBuilder('./specialevents.webp')] });
-    }
-
-    if (interaction.commandName === 'remind') {
-      const type = interaction.options.getString('type');
-      const when = interaction.options.getString('when');
-      const message = interaction.options.getString('message');
-      const pinged = interaction.options.getBoolean('get_pinged') ?? true;
-
-      let remindAt;
-
-      if (type === 'time') {
-        const minutes = parseInt(when, 10);
-        if (!minutes || minutes <= 0) return interaction.reply('Invalid minutes');
-        remindAt = new Date(Date.now() + minutes * 60000);
-      } else {
-        remindAt = parseBerlinDate(when);
-        if (!remindAt) return interaction.reply('Invalid date format');
-        if (remindAt < new Date()) return interaction.reply('Date is in the past');
-      }
-
-      await new Reminder({
-        userId: interaction.user.id,
-        channelId: interaction.channel.id,
-        guildId: interaction.guild.id,
-        message,
-        remindAt,
-        pinged
-      }).save();
-
-      const berlin = remindAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-      return interaction.reply(`Reminder set for ${berlin}`);
-    }
 
     if (interaction.commandName === 'remind-embed') {
       const modal = new ModalBuilder().setCustomId('reminder-modal').setTitle('Embed Reminder');
@@ -213,6 +139,9 @@ client.on('interactionCreate', async (interaction) => {
           new TextInputBuilder().setCustomId('pinged').setLabel('get pinged? true / false').setStyle(TextInputStyle.Short).setRequired(false)
         ),
         new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('channel').setLabel('Channel ID to send reminder').setStyle(TextInputStyle.Short).setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
           new TextInputBuilder().setCustomId('embed').setLabel('Embed JSON').setStyle(TextInputStyle.Paragraph).setRequired(true)
         )
       );
@@ -226,14 +155,16 @@ client.on('interactionCreate', async (interaction) => {
     const when = interaction.fields.getTextInputValue('when');
     const embedRaw = interaction.fields.getTextInputValue('embed');
     const pingedRaw = interaction.fields.getTextInputValue('pinged');
+    const channelRaw = interaction.fields.getTextInputValue('channel');
+
     const pinged = pingedRaw ? pingedRaw.toLowerCase() !== 'false' : true;
+    const channelId = channelRaw || interaction.channel.id;
 
     let embedJson;
     try { embedJson = JSON.parse(embedRaw); }
     catch { return interaction.reply({ content: 'Invalid JSON', ephemeral: true }); }
 
     let remindAt;
-
     if (type === 'time') {
       const minutes = parseInt(when, 10);
       if (!minutes || minutes <= 0) return interaction.reply({ content: 'Invalid minutes', ephemeral: true });
@@ -245,7 +176,7 @@ client.on('interactionCreate', async (interaction) => {
 
     await new Reminder({
       userId: interaction.user.id,
-      channelId: interaction.channel.id,
+      channelId,
       guildId: interaction.guild.id,
       message: JSON.stringify(embedJson),
       remindAt,
