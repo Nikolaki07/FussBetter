@@ -19,7 +19,7 @@ const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
-const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier', 'db'];
+const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
@@ -146,6 +146,9 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
+  // Special check for "db" - must be standalone word
+  const containsDB = /\bdb\b/i.test(message.content);
+  
   const containsCS = wannCsWords.some(word => 
     lowerContent.includes(word)
   );
@@ -199,7 +202,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 
-  if (containsGerman) {
+  if (containsGerman || containsDB) {
     try {
       await message.react('1403499851739828356');
     } catch (error) {
@@ -307,19 +310,33 @@ client.on('interactionCreate', async (interaction) => {
           }
           
           const [, day, month, year, hour, minute] = match;
-          // Convert 2-digit year to 4-digit (26 -> 2026)
           const fullYear = 2000 + parseInt(year);
           
-          // Create date string in ISO format for Frankfurt timezone
-          const dateString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+          // Create date in CET timezone
+          // We interpret the input as CET/CEST and convert to UTC
+          const localDate = new Date(fullYear, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
           
-          // Parse as Frankfurt time (Europe/Berlin timezone)
-          remindAt = new Date(dateString + '+01:00'); // CET offset
+          // Get CET offset (CET is UTC+1, CEST is UTC+2)
+          const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Europe/Berlin',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
           
-          // Adjust for daylight saving time
-          const frankfurtDate = new Date(remindAt.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
-          const offset = (remindAt - frankfurtDate) / 60000; // offset in minutes
-          remindAt = new Date(remindAt.getTime() - offset * 60000);
+          // Create a date object that represents the user's input in CET
+          const cetString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+          
+          // Parse as local time and get the offset
+          const tempDate = new Date(cetString);
+          const cetDate = new Date(tempDate.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+          const utcDate = new Date(tempDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+          const offsetMinutes = (utcDate - cetDate) / 60000;
+          
+          remindAt = new Date(tempDate.getTime() - offsetMinutes * 60000);
           
           // Check if date is in the past
           if (remindAt < new Date()) {
