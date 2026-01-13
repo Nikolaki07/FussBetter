@@ -54,7 +54,7 @@ const client = new Client({
 // WORD LISTS / REACTIONS
 // ================================
 
-const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'zeh', 'toe', 'teen'];
+const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'zeh', 'toe', 'teen', 'tenen'];
 const larsonWords = ['kyle larson', 'larson'];
 const franceWords = ['france', '🇫🇷', 'french'];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
