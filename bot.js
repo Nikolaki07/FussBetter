@@ -278,3 +278,4 @@ async function checkReminders() {
 // ================================
 
 client.login(process.env.DISCORD_BOT_TOKEN);
+ 
