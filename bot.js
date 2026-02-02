@@ -24,7 +24,7 @@ const jobWords = ['job', 'employment'];
 const wannCsWords = ['wann cs'];
 
 // User ID to react to with grrr emoji
-const grrrUserId = '629336494015905792';
+const grrrUserId = '69420';
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
