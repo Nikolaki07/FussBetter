@@ -22,6 +22,7 @@ const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
 const jobWords = ['job', 'employment'];
 const wannCsWords = ['wann cs'];
+const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '69420';
@@ -154,6 +155,10 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
+  const containsMogus = mogusWords.some(word =>
+    lowerContent.includes(word)
+  );
+  
   // Check if message contains job words
   const containsJob = jobWords.some(word =>
     lowerContent.includes(word)
@@ -221,6 +226,14 @@ client.on('messageCreate', async (message) => {
       await message.channel.send('Jetzt!');
     } catch (error) {
       console.error('Failed to send message:', error);
+    }
+  }
+  
+  if (containsMogus) {
+    try {
+      await message.react('📮');
+    } catch (error) {
+      console.error('Failed to react with custom emote:', error);
     }
   }
 
