@@ -12,7 +12,7 @@ const client = new Client({
 });
 
 // Words to detect (case-insensitive)
-const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet'];
+const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße'];
 const larsonWords = ['kyle larson', 'larson'];
 const franceWords = ['france', '🇫🇷', 'french'];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
