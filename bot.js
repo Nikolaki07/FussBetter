@@ -160,6 +160,10 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
+  const containsRust = wannRustWords.some(word => 
+    lowerContent.includes(word)
+  );
+  
   const containsMogus = mogusWords.some(word =>
     lowerContent.includes(word)
   );
@@ -229,6 +233,14 @@ client.on('messageCreate', async (message) => {
   if (containsCS) {
     try {
       await message.channel.send('Jetzt!');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  }
+  
+  if (containsRust) {
+    try {
+      await message.channel.send('Nie!');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
