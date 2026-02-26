@@ -12,7 +12,7 @@ const client = new Client({
 });
 
 // Words to detect (case-insensitive)
-const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße'];
+const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße', 'sex', 'gex'];
 const larsonWords = ['kyle larson', 'larson'];
 const franceWords = ['france', '🇫🇷', 'french'];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
@@ -20,8 +20,9 @@ const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törken', 'franzosen', 'nederlanders', 'niederländer'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
-const jobWords = ['job', 'employment'];
-const wannCsWords = ['wann cs'];
+const jobWords = [' job ', 'employment', 'employed'];
+const wannCsWords = ['wann cs', 'wann R6', 'wann Rainbow', 'wann beam', 'wann rostock'];
+const wannRustWords = ['wann rust'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 
 // User ID to react to with grrr emoji
@@ -120,6 +121,10 @@ client.on('messageCreate', async (message) => {
 
   // Check if message contains Kyle Larson
   const containsKyleLarson = larsonWords.some(word => 
+    lowerContent.includes(word)
+  );
+  
+  const containsRustWords = wannRustWords.some(word => 
     lowerContent.includes(word)
   );
 
