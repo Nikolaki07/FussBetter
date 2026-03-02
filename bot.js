@@ -24,6 +24,7 @@ const jobWords = [' job ', 'employment', 'employed'];
 const wannCsWords = ['wann cs', 'wann R6', 'wann Rainbow', 'wann beam', 'wann rostock'];
 const wannRustWords = ['wann rust'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
+const 1984Words = ['1984'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '69420';
@@ -148,6 +149,10 @@ client.on('messageCreate', async (message) => {
   const containsGrr = grrWords.some(word =>
     lowerContent.includes(word)
   );
+  
+  const contains1984 = 1984Words.some(word =>
+    lowerContent.includes(word)
+  );
 
   const containsGerman = germanWords.some(word =>
     lowerContent.includes(word)
@@ -217,6 +222,14 @@ client.on('messageCreate', async (message) => {
   if (containsGrr || isGrrrUser) {
     try {
       await message.react('1442859255748362261');
+    } catch (error) {
+      console.error('Failed to react with custom emote:', error);
+    }
+  }
+  
+  if (contains1984) {
+    try {
+      await message.react('1478078827119902821');
     } catch (error) {
       console.error('Failed to react with custom emote:', error);
     }
