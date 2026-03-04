@@ -150,7 +150,7 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
-  const contains1984 = 1984Words.some(word =>
+  const contains1984 = words1984.some(word =>
     lowerContent.includes(word)
   );
 
