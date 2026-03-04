@@ -24,7 +24,7 @@ const jobWords = [' job ', 'employment', 'employed'];
 const wannCsWords = ['wann cs', 'wann R6', 'wann Rainbow', 'wann beam', 'wann rostock'];
 const wannRustWords = ['wann rust'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
-const 1984Words = ['1984'];
+const words1984 = ['1984'];
 
 // User ID to react to with grrr emoji
 const grrrUserId = '69420';
