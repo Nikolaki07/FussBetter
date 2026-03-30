@@ -20,7 +20,6 @@ const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö'];
 const grrWords = ['törke', 'franzos', 'nederlander', 'niederländer', 'mof'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
-const jobWords = ['job', 'employment', 'employed'];
 const wannCsWords = ['wann' /* cs', 'wann R6', 'wann Rainbow', 'wann beam', 'wann rostock'*/];
 const wannRustWords = ['wann rust'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
@@ -173,11 +172,6 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
-  // Check if message contains job words
-  const containsJob = jobWords.some(word =>
-    lowerContent.includes(word)
-  );
-
   // Check if message is from specific user
   const isGrrrUser = message.author.id === grrrUserId;
 
@@ -312,17 +306,6 @@ client.on('messageCreate', async (message) => {
       console.error('Failed to delete messages:', error);
     }
   }
-
-  // Job detection with deletion
-  if (containsJob) {
-    try {
-      await message.delete();
-      await message.channel.send('J*B DETECTED!! PLEASE CENSOR IT AS IT MIGHT TRIGGER OTHER PEOPLE!!!');
-    } catch (error) {
-      console.error('Failed to delete job message:', error);
-    }
-  }
-});
 
 // Handle slash commands
 client.on('interactionCreate', async (interaction) => {
