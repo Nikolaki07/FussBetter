@@ -192,12 +192,24 @@ client.on('messageCreate', async (message) => {
     }
   }
   
-  if(contains67){
-	  try {
-      await message.channel.send('https://giphy.com/gifs/dwcFlb2ovRF3amTpCi');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
+  const links = [
+  'https://giphy.com/gifs/dwcFlb2ovRF3amTpCi',
+  'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXd6MmV3Z3J3M2lnZjN0aDM1NXRlMHVvdjR6MnI3bWh6aGN1MXpvMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/08uBcURaMq6vA93TGc/giphy.gif',
+  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/RVCJ3vwebUGDpoy7Tm/giphy.gif',
+  '[https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/x4sYb64AngRI9QznOA/giphy.gif]',
+  '[https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/XMMUWcz4XtDTNgZj22/giphy.gif]',
+  '[https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/MKUOUJrFldIyi2hJyT/giphy.gif]',
+  '[https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/8rN9VXNb7dfU792YQt/giphy.gif]',
+  '[https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6lhWhkfSjPSA8actTr/giphy.gif']
+];
+
+	if (contains67) {
+		try {
+			const randomLink = links[Math.floor(Math.random() * links.length)];
+			await message.channel.send(randomLink);
+		} catch (error) {
+			console.error('Failed to send message:', error);
+		}
   }
 
   if (containsMax) {
