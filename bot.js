@@ -173,6 +173,8 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   
+  const contains67 = /6.*7/.test(message.content);
+  
   // Check if message contains job words
   const containsJob = jobWords.some(word =>
     lowerContent.includes(word)
@@ -187,6 +189,14 @@ client.on('messageCreate', async (message) => {
       await message.react('🤤');
     } catch (error) {
       console.error('Failed to react:', error);
+    }
+  }
+  
+  if(contains67){
+	  try {
+      await message.channel.send('https://giphy.com/gifs/dwcFlb2ovRF3amTpCi');
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   }
 
