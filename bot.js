@@ -172,8 +172,11 @@ client.on('messageCreate', async (message) => {
   const containsMogus = mogusWords.some(word =>
     lowerContent.includes(word)
   );
-  const cleanContent = message.content.replace(/<a?:\w+:\d+>/g, '');
-  const contains67 = /6.*7|six.*seven|zes.*zeven|six.*sept|sechs.*sieben/i.test(cleanContent);
+  const textOnly = message.cleanContent
+  .replace(/https?:\/\/\S+/gi, '') // Removes URLs (GIFs/Images)
+  .replace(/<a?:\w+:\d+>/g, '');   // Removes Emoji IDs
+
+	const contains67 = /6.*7|six.*seven|zes.*zeven|six.*sept|sechs.*sieben/i.test(textOnly);
   
   // Check if message contains job words
   const containsJob = jobWords.some(word =>
