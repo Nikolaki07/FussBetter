@@ -200,7 +200,9 @@ client.on('messageCreate', async (message) => {
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/XMMUWcz4XtDTNgZj22/giphy.gif',
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/MKUOUJrFldIyi2hJyT/giphy.gif',
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/8rN9VXNb7dfU792YQt/giphy.gif',
-  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6lhWhkfSjPSA8actTr/giphy.gif'
+  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6lhWhkfSjPSA8actTr/giphy.gif',
+  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/x73W03Q8lfTBfeGcY7/giphy.gif',
+  'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TKa7fQzChHylCQ89to/giphy.gif'
 ];
 
 	if (contains67) {
