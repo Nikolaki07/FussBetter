@@ -173,7 +173,7 @@ client.on('messageCreate', async (message) => {
     lowerContent.includes(word)
   );
   const cleanContent = message.content.replace(/<a?:\w+:\d+>/g, '');
-  const contains67 = /6.*7|six.*seven|zes.*zeven|six.*sept|sechs.*sieben/i.test(message.content);
+  const contains67 = /6.*7|six.*seven|zes.*zeven|six.*sept|sechs.*sieben/i.test(cleanContent);
   
   // Check if message contains job words
   const containsJob = jobWords.some(word =>
