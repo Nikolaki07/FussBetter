@@ -46,6 +46,51 @@ const reminderSchema = new mongoose.Schema({
 
 const Reminder = mongoose.model('Reminder', reminderSchema);
 
+async function translateText(text, targetLanguage) {
+  const params = new URLSearchParams({
+    q: text,
+    langpair: `en|${targetLanguage}`,
+  });
+
+  const response = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error(`MyMemory API responded with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const translatedText = data?.responseData?.translatedText;
+
+  if (!translatedText) {
+    throw new Error('Translation response did not contain translated text');
+  }
+
+  return translatedText;
+}
+
+async function sendAsUser(channel, user, content) {
+  if (!channel || !channel.isTextBased() || typeof channel.fetchWebhooks !== 'function' || typeof channel.createWebhook !== 'function') {
+    throw new Error('This channel does not support webhooks.');
+  }
+
+  const webhookName = 'FussBetter Translator';
+  const existingWebhooks = await channel.fetchWebhooks();
+  let webhook = existingWebhooks.find(hook => hook.owner?.id === client.user.id && hook.name === webhookName);
+
+  if (!webhook) {
+    webhook = await channel.createWebhook({
+      name: webhookName,
+      reason: 'Needed to send translated text using the requesting user identity.',
+    });
+  }
+
+  await webhook.send({
+    content,
+    username: user.displayName || user.username,
+    avatarURL: user.displayAvatarURL(),
+  });
+}
+
 // Event: Bot is ready
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -87,6 +132,30 @@ client.once('ready', async () => {
     {
       name: 'remind-embed',
       description: 'Set a reminder with an embed',
+    },
+    {
+      name: 'dutch',
+      description: 'Translate text to Dutch and send it as you',
+      options: [
+        {
+          name: 'text',
+          description: 'English text to translate to Dutch',
+          type: 3,
+          required: true,
+        },
+      ],
+    },
+    {
+      name: 'german',
+      description: 'Translate text to German and send it as you',
+      options: [
+        {
+          name: 'text',
+          description: 'English text to translate to German',
+          type: 3,
+          required: true,
+        },
+      ],
     },
   ];
 
@@ -485,6 +554,32 @@ client.on('interactionCreate', async (interaction) => {
       );
 
       await interaction.showModal(modal);
+    }
+
+    if (interaction.commandName === 'dutch' || interaction.commandName === 'german') {
+      const replyOptions = interaction.inGuild() ? { ephemeral: true } : {};
+
+      try {
+        await interaction.deferReply(replyOptions);
+
+        const text = interaction.options.getString('text', true);
+        const targetLanguage = interaction.commandName === 'dutch' ? 'nl' : 'de';
+        const translatedText = await translateText(text, targetLanguage);
+
+        await sendAsUser(interaction.channel, interaction.member ?? interaction.user, translatedText);
+        await interaction.editReply('Translation sent.');
+      } catch (error) {
+        console.error(`Error in /${interaction.commandName} command:`, error);
+
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply('Failed to translate and send your message. Make sure the bot has Manage Webhooks permission in this channel.');
+        } else {
+          await interaction.reply({
+            content: 'Failed to translate and send your message. Make sure the bot has Manage Webhooks permission in this channel.',
+            ...replyOptions,
+          });
+        }
+      }
     }
   }
 
