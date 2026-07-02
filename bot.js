@@ -100,21 +100,46 @@ function parseMinutesReminder(value) {
   return new Date(Date.now() + minutes * 60000);
 }
 
-// Parses "DD.MM.YY HH:MM" as Europe/Berlin local time and returns the equivalent UTC Date.
+// Minutes to add to a UTC instant to get wall-clock time in `timeZone` (e.g. +120 for CEST).
+function getTimeZoneOffsetMinutes(timeZone, utcDate) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).formatToParts(utcDate).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  const asIfUtc = Date.UTC(
+    parseInt(parts.year, 10),
+    parseInt(parts.month, 10) - 1,
+    parseInt(parts.day, 10),
+    parseInt(parts.hour, 10),
+    parseInt(parts.minute, 10),
+    parseInt(parts.second, 10)
+  );
+
+  return (asIfUtc - utcDate.getTime()) / 60000;
+}
+
+// Parses "DD.MM.YY HH:MM" as Europe/Berlin local time (CET or CEST, whichever
+// applies on that date) and returns the equivalent UTC Date. Independent of
+// the host machine's own timezone setting.
 function parseGermanDateTime(value) {
   const match = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\s+(\d{1,2}):(\d{2})$/);
   if (!match) return null;
 
   const [, day, month, year, hour, minute] = match;
   const fullYear = 2000 + parseInt(year, 10);
-  const cetString = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
-  const tempDate = new Date(cetString);
 
-  const cetDate = new Date(tempDate.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
-  const utcDate = new Date(tempDate.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const offsetMinutes = (utcDate - cetDate) / 60000;
+  // Guess the UTC instant by treating the wall-clock digits as if they were
+  // UTC, then look up Berlin's real offset at that instant and correct for it.
+  const guessUtcMs = Date.UTC(fullYear, parseInt(month, 10) - 1, parseInt(day, 10), parseInt(hour, 10), parseInt(minute, 10));
+  const offsetMinutes = getTimeZoneOffsetMinutes('Europe/Berlin', new Date(guessUtcMs));
 
-  return new Date(tempDate.getTime() - offsetMinutes * 60000);
+  return new Date(guessUtcMs - offsetMinutes * 60000);
 }
 
 function resolveReminderTime(type, when) {
