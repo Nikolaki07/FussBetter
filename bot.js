@@ -25,7 +25,7 @@ const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 const words1984 = ['1984'];
 
 // Words matched as whole words only (so "wann" doesn't match inside "wanna")
-const wannWords = ['wann', 'when'];
+const wannWords = ['wann'];
 const wannRustPhrase = 'wann rust';
 
 // User ID to react to with grrr emoji
