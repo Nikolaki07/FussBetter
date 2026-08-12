@@ -518,3 +518,4 @@ async function checkReminders() {
 
 // Login to Discord
 client.login(process.env.DISCORD_BOT_TOKEN);
+ 
