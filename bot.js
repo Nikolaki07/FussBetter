@@ -12,21 +12,19 @@ const client = new Client({
 });
 
 // Words to detect (case-insensitive, substring match)
-const targetWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße', 'sex', 'gex'];
+const droolWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße', 'sex', 'gex'];
 const larsonWords = ['kyle larson', 'larson'];
-const franceWords = ['france', '🇫🇷', 'french'];
+const franceWords = ['france', '🇫🇷', 'french', "franz", "frans", "fran", "frankrijk"];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
-const tutututuWords = ['tututu', 'tödödö'];
-const grrWords = ['törke', 'franzos', 'nederlander', 'niederländer', 'mof'];
+const tutututuWords = ['tututu', 'tödödö', "dödödö", "dududu"];
+const grrWords = ['törke', "türk", 'franzos', 'nederlander', 'niederländer', 'mof'];
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
-const jobWords = ['placeholder because im retarded'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 const words1984 = ['1984'];
 
 // Words matched as whole words only (so "wann" doesn't match inside "wanna")
 const wannWords = ['wann'];
-const wannRustPhrase = 'wann rust';
 
 // User ID to react to with grrr emoji
 const grrrUserId = '69420';
@@ -233,7 +231,7 @@ client.on('messageCreate', async (message) => {
 
   const lowerContent = message.content.toLowerCase();
 
-  const containsTargetWord = containsAny(lowerContent, targetWords);
+  const containsDroolWords = containsAny(lowerContent, droolWords);
   const containsKyleLarson = containsAny(lowerContent, larsonWords);
   const containsFrance = containsAny(lowerContent, franceWords);
   const containsMax = containsAny(lowerContent, maxWords);
@@ -257,7 +255,7 @@ client.on('messageCreate', async (message) => {
     .replace(/<a?:\w+:\d+>/g, '');   // Removes Emoji IDs
   const contains67 = /6.*7|six.*seven|zes.*zeven|six.*sept|sechs.*sieben/i.test(textOnly);
 
-  if (containsTargetWord) {
+  if (containsDroolWords) {
     await safeReact(message, '🤤');
   }
 
@@ -307,31 +305,29 @@ client.on('messageCreate', async (message) => {
     await safeSend(message, 'Jetzt!');
   }
 
-  if (containsWannRust) {
-    await safeSend(message, 'Nie!');
-  }
-
   if (containsMogus) {
     await safeReact(message, '📮');
   }
 
   // Kyle Larson detection with countdown and deletion
   if (containsKyleLarson) {
-    await countdownAndDelete(message, 'KYLE LARSON DETECTED! MESSAGE GETS DELETED IN ');
+    await countdownAndDelete(message, 'You just mentioned He-Who-Must-Not-Be-Named! May you rot in hell!');
+    message = message.replace(/kyle/gi, 'K*le');
+    message = message.replace(/larson/gi, 'L*rson');
   }
 
   // France detection with countdown and deletion
   if (containsFrance) {
-    await countdownAndDelete(message, 'FR*NCE DETECTED! PLEASE NEXT TIME CENSOR THE F WORD. MESSAGE DELETED IN ');
+    await countdownAndDelete(message, 'FR*NCE DETECTED! Please censor the F-word from now on, or you might be banned!');
   }
 
   // Job detection with deletion
   if (containsJob) {
     try {
-      await message.delete();
-      await message.channel.send('J*B DETECTED!! PLEASE CENSOR IT AS IT MIGHT TRIGGER OTHER PEOPLE!!!');
+      message = message.replace(/job/gi, 'j*b');
+      await message.channel.send('J*b detected! Please censor it next time, as it might trigger other people!');
     } catch (error) {
-      console.error('Failed to delete job message:', error);
+      console.error('Failed to edit job message:', error);
     }
   }
 });
