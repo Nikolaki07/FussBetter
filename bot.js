@@ -1,6 +1,13 @@
+require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const mongoose = require('mongoose');
+
+/*
+---TODO---
+-Strikes für Larson/France mit timeout
+
+*/
 
 // Create a new Discord client
 const client = new Client({
@@ -12,7 +19,7 @@ const client = new Client({
 });
 
 // Words to detect (case-insensitive, substring match)
-const droolWords = ['füssen', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße', 'sex', 'gex'];
+const droolWords = ['füss', 'fuss', 'fuß', 'foot', 'voeten', 'voet', 'feet', 'füsse', 'füße', 'sex', 'gex'];
 const larsonWords = ['kyle larson', 'larson'];
 const franceWords = ['france', '🇫🇷', 'french', "franz", "frans", "fran", "frankrijk"];
 const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
@@ -71,24 +78,6 @@ async function safeSend(message, content) {
     await message.channel.send(content);
   } catch (error) {
     console.error('Failed to send message:', error);
-  }
-}
-
-// Sends a countdown message, edits it down to 1, then deletes both messages.
-async function countdownAndDelete(message, prefix, startAt = 5) {
-  try {
-    const countdownMsg = await message.channel.send(`${prefix}${startAt}...`);
-
-    for (let i = startAt - 1; i >= 1; i--) {
-      await delay(1000);
-      await countdownMsg.edit(`${prefix}${i}...`);
-    }
-
-    await delay(1000);
-    await message.delete();
-    await countdownMsg.delete();
-  } catch (error) {
-    console.error('Failed to run countdown deletion:', error);
   }
 }
 
@@ -241,11 +230,8 @@ client.on('messageCreate', async (message) => {
   const contains1984 = containsAny(lowerContent, words1984);
   const containsGerman = containsAny(lowerContent, germanWords);
   const containsMogus = containsAny(lowerContent, mogusWords);
-  const containsJob = containsAny(lowerContent, jobWords);
 
-  // "wann rust" is more specific than a bare "wann"/"when" - only fire one response
-  const containsWannRust = containsWholeWord(lowerContent, wannRustPhrase);
-  const containsWann = !containsWannRust && wannWords.some(word => containsWholeWord(lowerContent, word));
+  const containsWann = wannWords.some(word => containsWholeWord(lowerContent, word));
 
   const containsDB = containsWholeWord(message.content, 'db');
   const isGrrrUser = message.author.id === grrrUserId;
@@ -311,24 +297,12 @@ client.on('messageCreate', async (message) => {
 
   // Kyle Larson detection with countdown and deletion
   if (containsKyleLarson) {
-    await countdownAndDelete(message, 'You just mentioned He-Who-Must-Not-Be-Named! May you rot in hell!');
-    message = message.replace(/kyle/gi, 'K*le');
-    message = message.replace(/larson/gi, 'L*rson');
+    await safeSend(message, 'You just mentioned He-Who-Must-Not-Be-Named! May you rot in hell!');
   }
 
   // France detection with countdown and deletion
   if (containsFrance) {
-    await countdownAndDelete(message, 'FR*NCE DETECTED! Please censor the F-word from now on, or you might be banned!');
-  }
-
-  // Job detection with deletion
-  if (containsJob) {
-    try {
-      message = message.replace(/job/gi, 'j*b');
-      await message.channel.send('J*b detected! Please censor it next time, as it might trigger other people!');
-    } catch (error) {
-      console.error('Failed to edit job message:', error);
-    }
+    await safeSend(message, 'FR*NCE DETECTED! Please censor the F-word from now on, or you might be banned!');
   }
 });
 

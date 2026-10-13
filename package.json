@@ -6,7 +6,8 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "discord.js": "^14.14.1",
+    "discord.js": "^14.27.0",
+    "dotenv": "^18.0.7",
     "mongoose": "^8.21.0"
   }
 }
