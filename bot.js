@@ -26,9 +26,10 @@ const maxWords = ['max', 'max verstappen', 'verstappen', 'maximilian', 'maggs'];
 const landoWords = ['lando', 'norris', 'lando norris', 'lando no rizz'];
 const tutututuWords = ['tututu', 'tödödö', "dödödö", "dududu"];
 const grrWords = ['törke', "türk", 'franzos', 'nederlander', 'niederländer', 'mof'];
-const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier'];
+const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier','arisch'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 const words1984 = ['1984'];
+const yeWords = ['ye','olive delights','all of the lights','kanye','nhh','brother merry christmas','all the lights'];
 
 // Words matched as whole words only (so "wann" doesn't match inside "wanna")
 const wannWords = ['wann'];
@@ -49,6 +50,12 @@ const sixSevenGifLinks = [
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/x73W03Q8lfTBfeGcY7/giphy.gif',
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGM2cDRsamhieDE3ZHk0b3d3cnc4YTR6bWI1dWhxZXcyMGt6bTkyMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TKa7fQzChHylCQ89to/giphy.gif'
 ];
+
+const yeGifs = [
+  'https://tenor.com/kKEVHVgQggA.gif',
+  'https://tenor.com/hSWj4oml5Bg.gif',
+  'https://tenor.com/bVwCY.gif'
+]
 
 // --- Small helpers -----------------------------------------------------
 
@@ -230,6 +237,7 @@ client.on('messageCreate', async (message) => {
   const contains1984 = containsAny(lowerContent, words1984);
   const containsGerman = containsAny(lowerContent, germanWords);
   const containsMogus = containsAny(lowerContent, mogusWords);
+  const containsYe = containsAny(lowerContent, yeWords);
 
   const containsWann = wannWords.some(word => containsWholeWord(lowerContent, word));
 
@@ -303,6 +311,11 @@ client.on('messageCreate', async (message) => {
   // France detection with countdown and deletion
   if (containsFrance) {
     await safeSend(message, 'FR*NCE DETECTED! Please censor the F-word from now on, or you might be banned!');
+  }
+
+  if(containsYe) {
+    const randomLink = yeGifs[Math.floor(Math.random() * yeGifs.length)];
+    await safeSend(message, randomLink);
   }
 });
 
