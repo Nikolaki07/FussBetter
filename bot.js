@@ -29,15 +29,7 @@ const grrWords = ['törke', "türk", 'franzos', 'nederlander', 'niederländer', 
 const germanWords = ['duits', 'deutsch', 'deutschland', 'german', 'duitsers', 'arier','arisch'];
 const mogusWords = ['among us', 'amog us', 'mogus', 'sus'];
 const words1984 = ['1984'];
-const yeWords = [
-  /\bye\b/,                 // Matcht "ye", aber NICHT "yes", "yesterday" oder "kanye"
-  /olive delights/,         // Matcht normal als Teiltext
-  /all of the lights/,
-  /kanye/,                  // Matcht das Wort "kanye" komplett
-  /nhh/,
-  /brother merry christmas/,
-  /all the lights/
-];
+const yeWords = ['ye','olive delights','all of the lights','kanye','nhh','brother merry christmas','all the lights'];
 
 // Words matched as whole words only (so "wann" doesn't match inside "wanna")
 const wannWords = ['wann'];
@@ -245,7 +237,7 @@ client.on('messageCreate', async (message) => {
   const contains1984 = containsAny(lowerContent, words1984);
   const containsGerman = containsAny(lowerContent, germanWords);
   const containsMogus = containsAny(lowerContent, mogusWords);
-  const containsYe = yeWords.some(regex => regex.test(lowerContent));
+  const containsYe = containsAny(lowerContent, yeWords);
 
   const containsWann = wannWords.some(word => containsWholeWord(lowerContent, word));
 
